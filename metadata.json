@@ -1,0 +1,8 @@
+
+{
+  "name": "Berman Bakery Internal Complaints App",
+  "description": "An internal platform for Berman Bakery employees to report product quality issues, featuring AI-powered analysis and automated email drafting.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
