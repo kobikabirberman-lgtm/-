@@ -1,7 +1,6 @@
-
 {
-  "name": "Berman Bakery Internal Complaints App",
-  "description": "An internal platform for Berman Bakery employees to report product quality issues, featuring AI-powered analysis and automated email drafting.",
+  "name": "Berman Bakery Quality Portal",
+  "description": "Internal quality reporting system for Berman Bakery",
   "requestFramePermissions": [
     "camera"
   ]
