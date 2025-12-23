@@ -1,28 +1,25 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-import { Urgency } from "../types";
+import { Urgency } from "./types";
 
 export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
-  // קבלת המפתח מהסביבה של Vercel
   const apiKey = process.env.API_KEY;
-  
+
   if (!apiKey || apiKey === "undefined") {
-    throw new Error("מפתח API חסר! הגדר API_KEY ב-Settings של Vercel.");
+    throw new Error("מפתח API לא הוגדר ב-Vercel. יש להוסיף API_KEY ב-Settings.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
   
   try {
     const parts: any[] = [
-      { text: `System: Expert Food QC at Berman Bakery. 
-      Analyze this internal complaint. Provide clear insights in HEBREW.
+      { text: `System: Expert Food Quality Control at Berman Bakery. 
+      Analyze this product complaint. Be concise. Answer in HEBREW.
       Product: ${productName}
       Description: ${description}
-      Output JSON only.` }
+      Return JSON only.` }
     ];
 
     if (base64Image) {
-      // הסרת ה-header של ה-base64 אם קיים (data:image/jpeg;base64,...)
       const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
       parts.push({
         inlineData: {
@@ -40,20 +37,18 @@ export const analyzeComplaint = async (description: string, productName: string,
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            category: { type: Type.STRING },
+            category: { type: Type.STRING, description: "סוג התקלה במילה אחת" },
             urgency: { type: Type.STRING, enum: [Urgency.LOW, Urgency.MEDIUM, Urgency.HIGH, Urgency.CRITICAL] },
-            summary: { type: Type.STRING }
+            summary: { type: Type.STRING, description: "סיכום הממצאים ב-10 מילים" }
           },
           required: ["category", "urgency", "summary"]
         }
       }
     });
 
-    const result = JSON.parse(response.text || "{}");
-    return result;
+    return JSON.parse(response.text || "{}");
   } catch (error: any) {
-    console.error("AI Error Details:", error);
-    if (error.message?.includes("403")) throw new Error("מפתח ה-API לא תקין או שאין לו הרשאות");
-    throw new Error("ה-AI לא הצליח לנתח את הדיווח כרגע.");
+    console.error("Gemini Error:", error);
+    throw new Error("ה-AI נתקל בשגיאה. בדוק את מפתח ה-API ב-Vercel.");
   }
 };
