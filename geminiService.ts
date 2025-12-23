@@ -1,28 +1,35 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Urgency } from "./types";
+import { Urgency } from "../types";
 
 export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
-  // Use the API key directly from the environment variable as per guidelines
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // קבלת המפתח מהסביבה של Vercel
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey || apiKey === "undefined") {
+    throw new Error("מפתח API חסר! הגדר API_KEY ב-Settings של Vercel.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   try {
     const parts: any[] = [
-      { text: `System: You are an expert Food Quality Control Manager at Berman Bakery (מאפיית ברמן).
-      Task: Analyze an internal product quality report. 
+      { text: `System: Expert Food QC at Berman Bakery. 
+      Analyze this internal complaint. Provide clear insights in HEBREW.
       Product: ${productName}
-      Complaint: ${description}
-      ${base64Image ? "An image is attached. Please check for visual defects like mold, texture issues, or incorrect packaging." : ""}
-      
-      Requirements:
-      1. Summary must be exactly ONE professional sentence in HEBREW.
-      2. Urgency must be one of: "נמוכה", "בינונית", "גבוהה", "קריטית".
-      3. Categorize precisely (Production, Packaging, Hygiene, etc.).` }
+      Description: ${description}
+      Output JSON only.` }
     ];
 
     if (base64Image) {
-      const data = base64Image.split(',')[1];
-      parts.push({ inlineData: { mimeType: 'image/jpeg', data } });
+      // הסרת ה-header של ה-base64 אם קיים (data:image/jpeg;base64,...)
+      const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
+      parts.push({
+        inlineData: {
+          mimeType: 'image/jpeg',
+          data
+        }
+      });
     }
 
     const response = await ai.models.generateContent({
@@ -35,22 +42,18 @@ export const analyzeComplaint = async (description: string, productName: string,
           properties: {
             category: { type: Type.STRING },
             urgency: { type: Type.STRING, enum: [Urgency.LOW, Urgency.MEDIUM, Urgency.HIGH, Urgency.CRITICAL] },
-            summary: { type: Type.STRING },
-            visualFindings: { type: Type.STRING, description: "If an image was provided, describe what is seen in Hebrew. Otherwise null." }
+            summary: { type: Type.STRING }
           },
           required: ["category", "urgency", "summary"]
         }
       }
     });
 
-    // Access the .text property directly as it is not a method
-    return JSON.parse(response.text);
-  } catch (error) {
-    console.error("Gemini Analysis Error:", error);
-    return {
-      category: "כללי",
-      urgency: Urgency.MEDIUM,
-      summary: "התלונה נרשמה, אך ניתוח ה-AI לא זמין כרגע."
-    };
+    const result = JSON.parse(response.text || "{}");
+    return result;
+  } catch (error: any) {
+    console.error("AI Error Details:", error);
+    if (error.message?.includes("403")) throw new Error("מפתח ה-API לא תקין או שאין לו הרשאות");
+    throw new Error("ה-AI לא הצליח לנתח את הדיווח כרגע.");
   }
 };
