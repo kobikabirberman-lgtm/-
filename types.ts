@@ -1,6 +1,4 @@
 
-// types.ts
-
 export enum Urgency {
   LOW = 'נמוכה',
   MEDIUM = 'בינונית',
@@ -25,7 +23,7 @@ export interface Complaint {
   image: string;
   status: 'נשלח' | 'בטיפול' | 'בוצע';
   reporterName?: string;
-  aiAnalysis?: AIAnalysis;
   targetEmail?: string;
   reporterEmail?: string;
+  aiAnalysis?: AIAnalysis;
 }
