@@ -3,6 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Urgency } from "./types";
 
 export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
+  // השימוש ב-process.env.API_KEY נעשה ישירות לפי ההנחיות
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
   
   try {
@@ -24,7 +25,7 @@ export const analyzeComplaint = async (description: string, productName: string,
       model: "gemini-3-flash-preview",
       contents: { parts },
       config: {
-        systemInstruction: "אתה מומחה בקרת איכות במאפיית ברמן. נתח את התלונה בעברית. סווג קטגוריה, דחיפות וסיכום.",
+        systemInstruction: "אתה מומחה בקרת איכות במאפיית ברמן. נתח את התלונה בעברית. סווג קטגוריה, דחיפות וסיכום של עד 10 מילים.",
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
