@@ -15,20 +15,11 @@ export interface Complaint {
   reporterEmail: string;
   targetEmail: string;
   status: 'נשלח' | 'טיוטה' | 'בטיפול';
-  image?: string; // Base64 image data
+  image?: string;
   aiAnalysis?: {
     category: string;
     urgency: Urgency;
     summary: string;
     visualFindings?: string;
   };
-}
-
-export interface FormData {
-  productName: string;
-  productCode: string;
-  description: string;
-  targetEmail: string;
-  reporterEmail: string;
-  image?: string;
 }
