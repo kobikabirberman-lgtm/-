@@ -1,54 +1,73 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { Urgency } from "./types";
+import React, { useState, useEffect } from 'react';
+import { Complaint } from './types';
+import Header from './Header';
+import ComplaintForm from './ComplaintForm';
+import ComplaintList from './ComplaintList';
+import Stats from './Stats';
 
-export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
-  // קריאת המפתח שהוזרק ע"י ה-Define ב-Vite
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("מפתח ה-API עדיין לא מזוהה עיי האפליקציה. וודאו שביצעתם Redeploy ב-Vercel לאחר הגדרת המשתנה.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-  
-  try {
-    const parts: any[] = [
-      { text: `System: Expert Food Quality Control at Berman Bakery Israel. 
-      Analyze this internal product complaint professionally.
-      Answer in HEBREW.
-      Product: ${productName}
-      User Description: ${description}
-      Return JSON only.` }
-    ];
-
-    if (base64Image) {
-      const data = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
-      parts.push({
-        inlineData: { mimeType: 'image/jpeg', data }
-      });
+const App: React.FC = () => {
+  const [view, setView] = useState<'form' | 'history' | 'stats'>('form');
+  const [complaints, setComplaints] = useState<Complaint[]>(() => {
+    try {
+      const saved = localStorage.getItem('berman_quality_v4');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
+  });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: { parts },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            category: { type: Type.STRING, description: "סוג התקלה" },
-            urgency: { type: Type.STRING, enum: [Urgency.LOW, Urgency.MEDIUM, Urgency.HIGH, Urgency.CRITICAL] },
-            summary: { type: Type.STRING, description: "סיכום הממצאים" },
-            visualFindings: { type: Type.STRING, description: "מה רואים בתמונה" }
-          },
-          required: ["category", "urgency", "summary", "visualFindings"]
-        }
-      }
-    });
+  useEffect(() => {
+    localStorage.setItem('berman_quality_v4', JSON.stringify(complaints));
+  }, [complaints]);
 
-    return JSON.parse(response.text || "{}");
-  } catch (error: any) {
-    console.error("AI Error:", error);
-    throw new Error(error.message || "ניתוח ה-AI נכשל.");
-  }
+  const handleDelete = (id: string) => {
+    if(window.confirm('למחוק את הדיווח?')) {
+      setComplaints(complaints.filter(c => c.id !== id));
+    }
+  };
+
+  const handleImport = (newComplaints: Complaint[]) => {
+    setComplaints(newComplaints);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FDFBF7]" dir="rtl">
+      <div className="bg-amber-900 text-amber-100 text-[10px] py-1 text-center font-bold sticky top-0 z-[100] shadow-md uppercase tracking-widest border-b border-amber-800">
+        ברמן • בקרת איכות דיגיטלית ✅
+      </div>
+      
+      <Header setView={setView} currentView={view} />
+      
+      <main className="max-w-2xl mx-auto p-4 pt-6 pb-24">
+        {view === 'form' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <ComplaintForm onAdd={(newC) => {
+               setComplaints([newC, ...complaints]);
+               setView('history');
+             }} />
+          </div>
+        )}
+        
+        {view === 'history' && (
+          <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="flex justify-between items-center px-2">
+              <h2 className="text-xl font-black text-amber-950">יומן אירועים</h2>
+              <span className="bg-amber-100 text-amber-800 text-[10px] px-3 py-1 rounded-full font-bold">
+                {complaints.length} דיווחים
+              </span>
+            </div>
+            <ComplaintList complaints={complaints} onDelete={handleDelete} />
+          </div>
+        )}
+
+        {view === 'stats' && (
+          <div className="animate-in fade-in duration-500">
+            <Stats complaints={complaints} onImport={handleImport} />
+          </div>
+        )}
+      </main>
+    </div>
+  );
 };
+
+export default App;
