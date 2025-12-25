@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Complaint } from './types';
 import Header from './Header';
