@@ -30,8 +30,8 @@ const Header: React.FC<HeaderProps> = ({ setView, currentView }) => {
             <button 
               key={tab.id}
               onClick={() => setView(tab.id as any)}
-              className={`flex-1 py-2 rounded-lg font-black text-[11px] flex items-center justify-center gap-2 ${
-                currentView === tab.id ? 'bg-amber-900 text-white' : 'text-amber-800/60'
+              className={`flex-1 py-2.5 rounded-lg font-black text-[11px] flex items-center justify-center gap-2 transition-all ${
+                currentView === tab.id ? 'bg-amber-900 text-white shadow-lg' : 'text-amber-800/60 hover:bg-amber-100'
               }`}
             >
               <span>{tab.icon}</span>
