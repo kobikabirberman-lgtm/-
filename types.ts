@@ -1,9 +1,18 @@
 
+// types.ts
+
 export enum Urgency {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL'
+  LOW = 'נמוכה',
+  MEDIUM = 'בינונית',
+  HIGH = 'גבוהה',
+  CRITICAL = 'קריטית'
+}
+
+export interface AIAnalysis {
+  category: string;
+  urgency: Urgency;
+  summary: string;
+  visualFindings: string;
 }
 
 export interface Complaint {
@@ -16,12 +25,7 @@ export interface Complaint {
   image: string;
   status: 'נשלח' | 'בטיפול' | 'בוצע';
   reporterName?: string;
+  aiAnalysis?: AIAnalysis;
   targetEmail?: string;
   reporterEmail?: string;
-  aiAnalysis?: {
-    category: string;
-    urgency: Urgency;
-    summary: string;
-    visualFindings: string;
-  };
 }
