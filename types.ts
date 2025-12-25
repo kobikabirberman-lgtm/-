@@ -1,25 +1,27 @@
 
 export enum Urgency {
-  LOW = 'נמוכה',
-  MEDIUM = 'בינונית',
-  HIGH = 'גבוהה',
-  CRITICAL = 'קריטית'
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH',
+  CRITICAL = 'CRITICAL'
 }
 
 export interface Complaint {
   id: string;
   productName: string;
   productCode: string;
+  customerNumber?: string;
   description: string;
   date: string;
-  reporterEmail: string;
-  targetEmail: string;
-  status: 'נשלח' | 'טיוטה' | 'בטיפול';
-  image?: string;
+  image: string;
+  status: 'נשלח' | 'בטיפול' | 'בוצע';
+  reporterName?: string;
+  targetEmail?: string;
+  reporterEmail?: string;
   aiAnalysis?: {
     category: string;
     urgency: Urgency;
     summary: string;
-    visualFindings?: string;
+    visualFindings: string;
   };
 }
