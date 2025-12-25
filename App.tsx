@@ -6,7 +6,7 @@ import ComplaintForm from './ComplaintForm';
 import ComplaintList from './ComplaintList';
 import Stats from './Stats';
 
-const APP_VERSION = "v3.1 - CLOUD STABLE";
+const APP_VERSION = "v3.2 - ROOT UNIFIED";
 
 const App: React.FC = () => {
   const [view, setView] = useState<'form' | 'history' | 'stats'>('form');
@@ -20,58 +20,57 @@ const App: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSync, setLastSync] = useState<string>('');
 
-  // סנכרון מול שירות KV ציבורי פשוט לצורך הדגמה (מומלץ להחליף ל-Firebase בהמשך)
   const syncData = useCallback(async (dataToPush?: Complaint[]) => {
     if (!syncId || syncId.length < 3) return;
     
     setIsSyncing(true);
-    const key = `berman_bakery_${syncId}`;
-    const url = `https://api.keyvalue.xyz/7b6a4891/${key}`; // מפתח הדגמה
+    // שימוש במפתח ייחודי המבוסס על ה-Sync ID של המשתמש
+    const key = `berman_bakery_sync_${syncId.toLowerCase()}`;
+    const url = `https://api.keyvalue.xyz/7b6a4891/${key}`;
 
     try {
-      // 1. ניסיון משיכה
       const res = await fetch(url);
+      let cloudData: Complaint[] = [];
+      
       if (res.ok) {
         const cloudText = await res.text();
-        const cloudData: Complaint[] = JSON.parse(cloudText || "[]");
-        
-        // 2. מיזוג נתונים
-        setComplaints(prev => {
-          const currentData = dataToPush || prev;
-          const merged = [...currentData, ...cloudData].reduce((acc: Complaint[], curr) => {
-            if (!acc.find(i => i.id === curr.id)) acc.push(curr);
-            return acc;
-          }, []);
-          const sorted = merged.sort((a, b) => Number(b.id) - Number(a.id));
-          
-          // 3. דחיפה בחזרה לענן (רק אם לא משכנו סתם)
-          if (!dataToPush) {
-             fetch(url, { method: 'POST', body: JSON.stringify(sorted) }).catch(() => {});
-          }
-          
-          return sorted;
-        });
-      } else if (dataToPush) {
-        // אם המפתח לא קיים בענן, צור אותו
-        await fetch(url, { method: 'POST', body: JSON.stringify(dataToPush) });
+        cloudData = JSON.parse(cloudText || "[]");
       }
+
+      const currentData = dataToPush || complaints;
+      const merged = [...currentData, ...cloudData].reduce((acc: Complaint[], curr) => {
+        if (!acc.find(i => i.id === curr.id)) acc.push(curr);
+        return acc;
+      }, []);
+      
+      const sorted = merged.sort((a, b) => Number(b.id) - Number(a.id));
+      setComplaints(sorted);
+
+      // דחיפה לענן אם יש נתונים חדשים או אם זה סנכרון יזום
+      await fetch(url, { 
+        method: 'POST', 
+        body: JSON.stringify(sorted),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
       setLastSync(new Date().toLocaleTimeString('he-IL'));
     } catch (e) {
-      console.error("Sync failed", e);
+      console.error("Sync error:", e);
     } finally {
       setIsSyncing(false);
     }
-  }, [syncId]);
+  }, [syncId, complaints]);
 
-  // שמירה מקומית בכל שינוי
   useEffect(() => {
     localStorage.setItem('berman_db_v3', JSON.stringify(complaints));
   }, [complaints]);
 
-  // סנכרון ראשוני
   useEffect(() => {
-    if (syncId) syncData();
-  }, [syncId, syncData]);
+    if (syncId) {
+      const timer = setTimeout(() => syncData(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [syncId]);
 
   const handleAdd = (newC: Complaint) => {
     const updated = [newC, ...complaints];
@@ -81,7 +80,7 @@ const App: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if(window.confirm('למחוק?')) {
+    if(window.confirm('למחוק את הדיווח?')) {
       const updated = complaints.filter(c => c.id !== id);
       setComplaints(updated);
       if (syncId) syncData(updated);
@@ -96,10 +95,10 @@ const App: React.FC = () => {
           {syncId ? (
             <span className="flex items-center gap-1.5 font-bold">
               <span className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-amber-400 animate-pulse' : 'bg-green-500'}`}></span>
-              סנכרון פעיל: {syncId} {lastSync && `(${lastSync})`}
+              מחובר: {syncId} {lastSync && `(${lastSync})`}
             </span>
           ) : (
-            <span className="text-red-400 font-bold animate-pulse">מצב לא מסונכרן</span>
+            <span className="text-red-400 font-bold animate-pulse">מצב מקומי (ללא סנכרון)</span>
           )}
         </div>
       </div>
@@ -112,8 +111,12 @@ const App: React.FC = () => {
           <div className="space-y-6">
             <div className="flex justify-between items-center px-2">
               <h2 className="text-2xl font-black text-amber-950">יומן איכות</h2>
-              <button onClick={() => syncData()} className={`p-2 bg-white rounded-lg shadow-sm border ${isSyncing ? 'opacity-50' : ''}`}>
-                <span className={isSyncing ? 'animate-spin block' : ''}>🔄</span>
+              <button 
+                onClick={() => syncData()} 
+                disabled={isSyncing}
+                className={`p-3 bg-white rounded-2xl shadow-sm border border-amber-100 transition-all active:scale-90 ${isSyncing ? 'opacity-50' : ''}`}
+              >
+                <span className={`block text-lg ${isSyncing ? 'animate-spin' : ''}`}>🔄</span>
               </button>
             </div>
             <ComplaintList complaints={complaints} onDelete={handleDelete} />
