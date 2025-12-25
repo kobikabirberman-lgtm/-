@@ -2,10 +2,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Urgency } from "./types";
 
 export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
+  // השימוש ב-process.env.API_KEY מוזרק ע"י Vite ב-build
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("מפתח API חסר בשרת. וודא שב-Vercel המשתנה נקרא API_KEY ובצע Redeploy.");
+    throw new Error("מפתח ה-API לא זוהה. וודא שהגדרת API_KEY ב-Vercel וביצעת Redeploy.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -48,6 +49,6 @@ export const analyzeComplaint = async (description: string, productName: string,
     return JSON.parse(response.text || "{}");
   } catch (error: any) {
     console.error("AI Analysis Error:", error);
-    throw new Error(error.message || "ניתוח ה-AI נכשל. בדוק חיבור אינטרנט או תקינות מפתח.");
+    throw new Error(error.message || "ניתוח ה-AI נכשל.");
   }
 };
