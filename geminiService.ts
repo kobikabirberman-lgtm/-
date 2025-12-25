@@ -2,11 +2,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Urgency } from "./types";
 
 export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
-  // קריאת המפתח שהוזרק ע"י ה-Define ב-Vite
   const apiKey = process.env.API_KEY;
 
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("מפתח ה-API עדיין לא מזוהה עיי האפליקציה. וודאו שביצעתם Redeploy ב-Vercel לאחר הגדרת המשתנה.");
+    throw new Error("מפתח API חסר בשרת. וודא שב-Vercel המשתנה נקרא API_KEY ובצע Redeploy.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -48,7 +47,7 @@ export const analyzeComplaint = async (description: string, productName: string,
 
     return JSON.parse(response.text || "{}");
   } catch (error: any) {
-    console.error("AI Error:", error);
-    throw new Error(error.message || "ניתוח ה-AI נכשל.");
+    console.error("AI Analysis Error:", error);
+    throw new Error(error.message || "ניתוח ה-AI נכשל. בדוק חיבור אינטרנט או תקינות מפתח.");
   }
 };
