@@ -2,21 +2,22 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Urgency } from "./types";
 
 export const analyzeComplaint = async (description: string, productName: string, base64Image?: string) => {
-  // האפליקציה מחפשת בדיוק את השם API_KEY
+  // קריאת המפתח שהוזרק ע"י ה-Define ב-Vite
   const apiKey = process.env.API_KEY;
 
-  if (!apiKey || apiKey === "undefined" || apiKey === "") {
-    throw new Error("מפתח API חסר. ב-Vercel יש להגדיר משתנה בשם API_KEY (ולא 'kobi').");
+  if (!apiKey || apiKey === "" || apiKey === "undefined") {
+    throw new Error("מפתח ה-API עדיין לא מזוהה עיי האפליקציה. וודאו שביצעתם Redeploy ב-Vercel לאחר הגדרת המשתנה.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
   
   try {
     const parts: any[] = [
-      { text: `System: Expert Food Quality Control at Berman Bakery. 
-      Analyze this issue professionally and concisely. Answer in HEBREW.
+      { text: `System: Expert Food Quality Control at Berman Bakery Israel. 
+      Analyze this internal product complaint professionally.
+      Answer in HEBREW.
       Product: ${productName}
-      Issue: ${description}
+      User Description: ${description}
       Return JSON only.` }
     ];
 
@@ -48,6 +49,6 @@ export const analyzeComplaint = async (description: string, productName: string,
     return JSON.parse(response.text || "{}");
   } catch (error: any) {
     console.error("AI Error:", error);
-    throw new Error(error.message || "ניתוח ה-AI נכשל");
+    throw new Error(error.message || "ניתוח ה-AI נכשל.");
   }
 };
