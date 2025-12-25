@@ -18,25 +18,45 @@ const getUrgencyColor = (urgency?: Urgency) => {
 };
 
 const ComplaintList: React.FC<ComplaintListProps> = ({ complaints, onDelete }) => {
-  if (complaints.length === 0) return <div className="text-center py-20 opacity-50 font-black">אין דיווחים</div>;
+  if (complaints.length === 0) return (
+    <div className="text-center py-20 opacity-30 flex flex-col items-center">
+      <span className="text-6xl mb-4">📜</span>
+      <p className="font-black">אין דיווחים ביומן</p>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
       {complaints.map(complaint => (
-        <div key={complaint.id} className="bg-white rounded-2xl shadow-sm border border-amber-100 flex overflow-hidden">
-          <img src={complaint.image} className="w-24 h-24 object-cover" />
-          <div className="p-3 flex-1">
-            <div className="flex justify-between items-start">
-              <h3 className="font-black text-amber-950">{complaint.productName}</h3>
-              <button onClick={() => onDelete(complaint.id)} className="text-red-200">🗑️</button>
+        <div key={complaint.id} className="bg-white rounded-3xl shadow-sm border border-amber-100 flex overflow-hidden hover:shadow-md transition-shadow">
+          <div className="w-24 h-24 shrink-0 bg-amber-50">
+            <img src={complaint.image} className="w-full h-full object-cover" />
+          </div>
+          <div className="p-3 flex-1 min-w-0">
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="font-black text-amber-950 truncate text-sm">{complaint.productName}</h3>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onDelete(complaint.id); }} 
+                className="text-red-200 hover:text-red-500 p-1"
+              >
+                🗑️
+              </button>
             </div>
-            <p className="text-[10px] text-amber-900/70 truncate">{complaint.description}</p>
-            {complaint.aiAnalysis && (
-              <div className={`mt-1 inline-block px-2 py-0.5 rounded text-[8px] font-black ${getUrgencyColor(complaint.aiAnalysis.urgency)}`}>
-                AI: {complaint.aiAnalysis.urgency}
+            <p className="text-[10px] text-amber-900/70 line-clamp-2 leading-tight mb-2">{complaint.description}</p>
+            
+            <div className="flex items-center justify-between mt-auto">
+              <div className="flex gap-1">
+                {complaint.aiAnalysis && (
+                  <div className={`px-2 py-0.5 rounded-full text-[8px] font-black ${getUrgencyColor(complaint.aiAnalysis.urgency)}`}>
+                    {complaint.aiAnalysis.urgency}
+                  </div>
+                )}
+                <div className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[8px] font-black">
+                  {complaint.status}
+                </div>
               </div>
-            )}
-            <div className="mt-2 text-[8px] text-amber-400 font-bold">{complaint.date}</div>
+              <div className="text-[8px] text-amber-400 font-bold">{complaint.date}</div>
+            </div>
           </div>
         </div>
       ))}
